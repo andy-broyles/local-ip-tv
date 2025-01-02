@@ -1,0 +1,12 @@
+D:\Projects\local-ip-tv\backend
+D:\Projects\local-ip-tv\frontend
+D:\Projects\local-ip-tv\backend\controllers
+D:\Projects\local-ip-tv\backend\routes
+D:\Projects\local-ip-tv\frontend\config
+D:\Projects\local-ip-tv\frontend\public
+D:\Projects\local-ip-tv\frontend\src
+D:\Projects\local-ip-tv\frontend\src\assets
+D:\Projects\local-ip-tv\frontend\src\components
+D:\Projects\local-ip-tv\frontend\src\pages
+D:\Projects\local-ip-tv\frontend\src\styles
+D:\Projects\local-ip-tv\frontend\src\utils

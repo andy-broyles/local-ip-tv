@@ -66,16 +66,25 @@ Local IP TV is a web application that allows you to view and manage live camera 
 
 ---
 
-## Folder Structure
+# Folder Structure
 
 ```
 local-ip-tv/
-├── frontend/         # Frontend source code
-│   ├── src/         # React components
-│   ├── public/      # Static assets
-│   └── vite.config.js # Vite configuration
-├── backend/         # (Future Backend Setup)
-└── README.md        # Project documentation
+├── backend/                     # Backend code
+│   ├── controllers/            # Backend controllers
+│   └── routes/                 # Backend routes
+├── frontend/                    # Frontend code
+│   ├── config/                  # Configuration files
+│   ├── public/                  # Static assets
+│   ├── src/                     # Source code for React components
+│   │   ├── assets/              # Images and static assets
+│   │   ├── components/          # React components
+│   │   ├── pages/               # Page-level components
+│   │   ├── styles/              # CSS or stylesheets
+│   │   └── utils/               # Utility functions
+├── .gitignore                   # Git ignore rules
+├── LICENSE                      # License file
+└── README.md                    # Project documentation
 ```
 
 ---
