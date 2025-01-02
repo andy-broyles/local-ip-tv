@@ -26,7 +26,13 @@ const CameraCard = ({ index, camera, removeCamera, handleFullscreen, moveCamera,
   drag(drop(ref));
 
   return (
-    <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1, padding: '10px', borderRadius: '5px', background: darkMode ? '#333' : '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+    <div ref={ref} style={{
+      opacity: isDragging ? 0.5 : 1,
+      padding: '10px',
+      borderRadius: '5px',
+      background: darkMode ? '#333' : '#fff',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    }}>
       <h3>{camera.name}</h3>
       <p>{camera.url}</p>
       <p>Tags: {camera.tags.join(', ')}</p>
@@ -85,7 +91,7 @@ function App() {
       return;
     }
 
-    const newCamera = { id: Date.now(), name: cameraName, url: cameraUrl, tags: tags.split(',').map(tag => tag.trim()), status: 'active' };
+    const newCamera = { id: Date.now(), name: cameraName, url: cameraUrl, tags: tags ? tags.split(',').map(tag => tag.trim()) : [], status: 'active' };
     setCameras([...cameras, newCamera]);
     setCameraUrl('');
     setCameraName('');
@@ -126,21 +132,38 @@ function App() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ fontFamily: 'Arial, sans-serif', minHeight: '100vh', background: darkMode ? '#121212' : '#f4f4f9', color: darkMode ? '#fff' : '#333', transition: 'background 0.3s' }}>
-        <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: darkMode ? '#444' : '#007BFF', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
-          <h1 style={{ margin: 0, fontSize: '24px' }}>Local IP TV</h1>
-          <button onClick={toggleTheme} style={{ padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', border: 'none', background: darkMode ? '#f4f4f9' : '#121212', color: darkMode ? '#333' : '#fff' }}>
-            {darkMode ? 'Light Mode' : 'Dark Mode'}
-          </button>
+      <div style={{
+        fontFamily: 'Arial, sans-serif',
+        minHeight: '100vh',
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        background: darkMode ? '#121212' : '#f4f4f9',
+        color: darkMode ? '#fff' : '#333'
+      }}>
+        <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 20px', background: darkMode ? '#444' : '#007BFF', color: '#fff' }}>
+          <h1>Local IP TV</h1>
+          <button onClick={toggleTheme}>{darkMode ? 'Light Mode' : 'Dark Mode'}</button>
         </nav>
-
-        <div style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <input type="text" value={cameraName} onChange={(e) => setCameraName(e.target.value)} placeholder="Camera Name" />
-            <input type="text" value={cameraUrl} onChange={(e) => setCameraUrl(e.target.value)} placeholder="Camera URL or IP" />
-            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags (comma-separated)" />
-            <button onClick={addCamera}>Add Camera</button>
-          </div>
+        <div style={{ padding: '10px' }}>
+          <input type="text" value={cameraName} onChange={(e) => setCameraName(e.target.value)} placeholder="Camera Name" />
+          <input type="text" value={cameraUrl} onChange={(e) => setCameraUrl(e.target.value)} placeholder="Camera URL or IP" />
+          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags (comma-separated)" />
+          <button onClick={addCamera}>Add Camera</button>
+        </div>
+        <div style={{ flexGrow: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px', padding: '10px' }}>
+          {filteredCameras.map((camera, index) => (
+            <CameraCard
+              key={camera.id}
+              index={index}
+              camera={camera}
+              removeCamera={removeCamera}
+              handleFullscreen={handleFullscreen}
+              moveCamera={moveCamera}
+              darkMode={darkMode}
+            />
+          ))}
         </div>
       </div>
     </DndProvider>
