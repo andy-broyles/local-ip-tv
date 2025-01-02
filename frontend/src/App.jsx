@@ -1,7 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import JSMpeg from 'jsmpeg';
-import React from 'react';
-
 
 function App() {
   const [cameras, setCameras] = useState(() => {
@@ -69,24 +67,24 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', minHeight: '100vh', background: darkMode ? '#121212' : '#f4f4f9', color: darkMode ? '#fff' : '#333' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', minHeight: '100vh', background: darkMode ? '#121212' : '#f4f4f9', color: darkMode ? '#fff' : '#333', transition: 'background 0.3s' }}>
       {/* Navbar */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: darkMode ? '#333' : '#007BFF', color: '#fff' }}>
-        <h1 style={{ margin: 0 }}>Local IP TV</h1>
-        <button onClick={toggleTheme} style={{ padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', border: 'none', background: darkMode ? '#f4f4f9' : '#121212', color: darkMode ? '#333' : '#fff' }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: darkMode ? '#444' : '#007BFF', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Local IP TV</h1>
+        <button onClick={toggleTheme} style={{ padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', border: 'none', background: darkMode ? '#f4f4f9' : '#121212', color: darkMode ? '#333' : '#fff' }}>
           {darkMode ? 'Light Mode' : 'Dark Mode'}
         </button>
       </nav>
 
       <div style={{ padding: '20px' }}>
         {/* Input Form */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', gap: '10px' }}>
           <input
             type="text"
             placeholder="Enter Camera URL"
             value={cameraUrl}
             onChange={(e) => setCameraUrl(e.target.value)}
-            style={{ padding: '10px', width: '300px', marginRight: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+            style={{ padding: '10px', width: '300px', borderRadius: '5px', border: '1px solid #ccc', background: darkMode ? '#333' : '#fff', color: darkMode ? '#fff' : '#333' }}
           />
           <button
             onClick={addCamera}
@@ -100,9 +98,9 @@ function App() {
         {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
         {/* Camera Feeds */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px', marginTop: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
           {cameras.map((camera) => (
-            <div key={camera.id} style={{ border: '1px solid #ddd', padding: '10px', borderRadius: '5px', boxShadow: darkMode ? '0 4px 6px rgba(255, 255, 255, 0.1)' : '0 4px 6px rgba(0, 0, 0, 0.1)', background: darkMode ? '#1e1e1e' : '#fff' }}>
+            <div key={camera.id} style={{ border: '1px solid #ddd', padding: '10px', borderRadius: '5px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', background: darkMode ? '#1e1e1e' : '#fff' }}>
               <p style={{ wordBreak: 'break-all', fontSize: '12px', color: darkMode ? '#bbb' : '#555' }}>{camera.url}</p>
               {camera.url.startsWith('rtsp://') ? (
                 <canvas id={`canvas-${camera.id}`} width="300" height="200" style={{ borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleFullscreen(camera)}></canvas>
