@@ -1,5 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
-import JSMpeg from 'jsmpeg';
+import JSMpeg from '@cycjimmy/jsmpeg-player';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
+const CameraCard = ({ index, camera, removeCamera, handleFullscreen, moveCamera, darkMode }) => {
+  const ref = useRef(null);
+  const [{ isDragging }, drag] = useDrag({
+    type: 'camera',
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [, drop] = useDrop({
+    accept: 'camera',
+    hover: (item) => {
+      if (item.index !== index) {
+        moveCamera(item.index, index);
+        item.index = index;
+      }
+    },
+  });
+
+  drag(drop(ref));
+
+  return (
+    <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1, padding: '10px', borderRadius: '5px', background: darkMode ? '#333' : '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+      <h3>{camera.name}</h3>
+      <p>{camera.url}</p>
+      <p>Tags: {camera.tags.join(', ')}</p>
+      <p>Status: {camera.status}</p>
+      {camera.url.startsWith('rtsp://') ? (
+        <canvas id={`canvas-${camera.id}`} width="300" height="200"></canvas>
+      ) : (
+        <iframe src={camera.url} width="300" height="200" style={{ border: 'none' }}></iframe>
+      )}
+      <div style={{ marginTop: '10px' }}>
+        <button onClick={() => handleFullscreen(camera)} style={{ marginRight: '10px', padding: '5px 10px', background: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px' }}>Fullscreen</button>
+        <button onClick={() => removeCamera(camera.id)} style={{ padding: '5px 10px', background: '#DC3545', color: '#fff', border: 'none', borderRadius: '5px' }}>Remove</button>
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const [cameras, setCameras] = useState(() => {
@@ -7,9 +50,12 @@ function App() {
     return savedCameras ? JSON.parse(savedCameras) : [];
   });
   const [cameraUrl, setCameraUrl] = useState('');
+  const [cameraName, setCameraName] = useState('');
+  const [tags, setTags] = useState('');
   const [error, setError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [fullscreenCamera, setFullscreenCamera] = useState(null);
+  const [selectedTag, setSelectedTag] = useState('All');
 
   useEffect(() => {
     localStorage.setItem('cameras', JSON.stringify(cameras));
@@ -20,27 +66,30 @@ function App() {
   };
 
   const isValidUrl = (url) => {
+    const ipRegex = /^\d{1,3}(\.\d{1,3}){3}$/;
     try {
-      new URL(url);
-      return true;
+      return new URL(url) || ipRegex.test(url);
     } catch {
-      return false;
+      return ipRegex.test(url);
     }
   };
 
   const addCamera = () => {
-    if (cameraUrl.trim() === '') {
-      setError('URL cannot be empty.');
+    if (cameraUrl.trim() === '' || cameraName.trim() === '') {
+      setError('Name and URL/IP cannot be empty.');
       return;
     }
 
     if (!isValidUrl(cameraUrl) && !cameraUrl.startsWith('rtsp://')) {
-      setError('Invalid URL. Please enter a valid HTTP or RTSP URL.');
+      setError('Invalid URL or IP. Please enter a valid IP, HTTP, or RTSP URL.');
       return;
     }
 
-    setCameras([...cameras, { id: Date.now(), url: cameraUrl }]);
+    const newCamera = { id: Date.now(), name: cameraName, url: cameraUrl, tags: tags.split(',').map(tag => tag.trim()), status: 'active' };
+    setCameras([...cameras, newCamera]);
     setCameraUrl('');
+    setCameraName('');
+    setTags('');
     setError('');
   };
 
@@ -51,7 +100,7 @@ function App() {
   const videoRefs = useRef({});
   useEffect(() => {
     cameras.forEach(camera => {
-      if (camera.url.startsWith('rtsp://') && !videoRefs.current[camera.id]) {
+      if ((camera.url.startsWith('rtsp://') || /^\d{1,3}(\.\d{1,3}){3}$/.test(camera.url)) && !videoRefs.current[camera.id]) {
         const canvas = document.getElementById(`canvas-${camera.id}`);
         videoRefs.current[camera.id] = new JSMpeg.Player(camera.url, { canvas });
       }
@@ -66,76 +115,35 @@ function App() {
     setFullscreenCamera(null);
   };
 
+  const moveCamera = (dragIndex, hoverIndex) => {
+    const updatedCameras = [...cameras];
+    const [draggedCamera] = updatedCameras.splice(dragIndex, 1);
+    updatedCameras.splice(hoverIndex, 0, draggedCamera);
+    setCameras(updatedCameras);
+  };
+
+  const filteredCameras = selectedTag === 'All' ? cameras : cameras.filter(camera => camera.tags.includes(selectedTag));
+
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', minHeight: '100vh', background: darkMode ? '#121212' : '#f4f4f9', color: darkMode ? '#fff' : '#333', transition: 'background 0.3s' }}>
-      {/* Navbar */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: darkMode ? '#444' : '#007BFF', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Local IP TV</h1>
-        <button onClick={toggleTheme} style={{ padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', border: 'none', background: darkMode ? '#f4f4f9' : '#121212', color: darkMode ? '#333' : '#fff' }}>
-          {darkMode ? 'Light Mode' : 'Dark Mode'}
-        </button>
-      </nav>
-
-      <div style={{ padding: '20px' }}>
-        {/* Input Form */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', gap: '10px' }}>
-          <input
-            type="text"
-            placeholder="Enter Camera URL"
-            value={cameraUrl}
-            onChange={(e) => setCameraUrl(e.target.value)}
-            style={{ padding: '10px', width: '300px', borderRadius: '5px', border: '1px solid #ccc', background: darkMode ? '#333' : '#fff', color: darkMode ? '#fff' : '#333' }}
-          />
-          <button
-            onClick={addCamera}
-            style={{ padding: '10px 20px', borderRadius: '5px', background: '#28a745', color: '#fff', border: 'none', cursor: 'pointer' }}
-          >
-            Add Camera
+    <DndProvider backend={HTML5Backend}>
+      <div style={{ fontFamily: 'Arial, sans-serif', minHeight: '100vh', background: darkMode ? '#121212' : '#f4f4f9', color: darkMode ? '#fff' : '#333', transition: 'background 0.3s' }}>
+        <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: darkMode ? '#444' : '#007BFF', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+          <h1 style={{ margin: 0, fontSize: '24px' }}>Local IP TV</h1>
+          <button onClick={toggleTheme} style={{ padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', border: 'none', background: darkMode ? '#f4f4f9' : '#121212', color: darkMode ? '#333' : '#fff' }}>
+            {darkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
-        </div>
+        </nav>
 
-        {/* Error Message */}
-        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-
-        {/* Camera Feeds */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
-          {cameras.map((camera) => (
-            <div key={camera.id} style={{ border: '1px solid #ddd', padding: '10px', borderRadius: '5px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', background: darkMode ? '#1e1e1e' : '#fff' }}>
-              <p style={{ wordBreak: 'break-all', fontSize: '12px', color: darkMode ? '#bbb' : '#555' }}>{camera.url}</p>
-              {camera.url.startsWith('rtsp://') ? (
-                <canvas id={`canvas-${camera.id}`} width="300" height="200" style={{ borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleFullscreen(camera)}></canvas>
-              ) : (
-                <iframe
-                  src={camera.url}
-                  width="100%"
-                  height="200"
-                  style={{ border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                  allowFullScreen
-                  onClick={() => handleFullscreen(camera)}
-                ></iframe>
-              )}
-              <button
-                onClick={() => removeCamera(camera.id)}
-                style={{ marginTop: '10px', padding: '5px 10px', borderRadius: '5px', background: '#DC3545', color: '#fff', border: 'none', cursor: 'pointer' }}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+        <div style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <input type="text" value={cameraName} onChange={(e) => setCameraName(e.target.value)} placeholder="Camera Name" />
+            <input type="text" value={cameraUrl} onChange={(e) => setCameraUrl(e.target.value)} placeholder="Camera URL or IP" />
+            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags (comma-separated)" />
+            <button onClick={addCamera}>Add Camera</button>
+          </div>
         </div>
       </div>
-
-      {fullscreenCamera && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0, 0, 0, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {fullscreenCamera.url.startsWith('rtsp://') ? (
-            <canvas id={`fullscreen-${fullscreenCamera.id}`} width="800" height="600"></canvas>
-          ) : (
-            <iframe src={fullscreenCamera.url} width="800" height="600" style={{ border: 'none' }} allowFullScreen></iframe>
-          )}
-          <button onClick={closeFullscreen} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', background: '#DC3545', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>Close</button>
-        </div>
-      )}
-    </div>
+    </DndProvider>
   );
 }
 
